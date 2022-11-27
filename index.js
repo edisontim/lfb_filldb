@@ -9,7 +9,6 @@ function loadIngredients(path) {
   rawdata.shift();
   const data = rawdata.map((x) => {
     return x.replace(/ /g, "");
-    //  + ".eth"
   });
   return data;
 }
@@ -18,18 +17,36 @@ function computeNameHash(ingredients) {
   return ingredients.map((x) => namehash.hash(x));
 }
 
-function computeMerkleTree(domains) {
-  const leaves = domains.map((x) => keccak256(x));
-  const tree = new MerkleTree.MerkleTree(leaves, keccak256);
+function computeKeccak(nameHashes) {
+  return nameHashes.map((x) => keccak256(x));
+}
+
+function computeMerkleTree(sortedLeaves) {
+  const tree = new MerkleTree.MerkleTree(sortedLeaves, keccak256, {
+    sort: true,
+  });
   const root = tree.getRoot().toString("hex");
+  const proofs = sortedLeaves.map((x) => tree.getHexProof(x));
+  return { root: root, proofs: proofs, tree: tree };
+}
 
-  // const proof = tree.getProof(leaves[0]);
+function sortAll(ingredients, nameHashes, leaves) {
+  let data = [];
+  for (let i = 0; i < ingredients.length; i++) {
+    data.push({
+      ingredient: ingredients[i],
+      nameHash: nameHashes[i],
+      leaf: leaves[i],
+    });
+  }
 
-  const proofs = leaves.map((x) => tree.getHexProof(x));
+  data.sort((a, b) => Buffer.compare(a.leaf, b.leaf));
 
-  // console.log(tree.verify(proof, leaves[0], root));
-
-  return { root: root, proofs: proofs };
+  for (let i = 0; i < ingredients.length; i++) {
+    ingredients[i] = ingredients[i];
+    nameHashes[i] = nameHashes[i];
+    leaves[i] = leaves[i];
+  }
 }
 
 (async () => {
@@ -40,16 +57,19 @@ function computeMerkleTree(domains) {
     hash: "string",
     path: "array",
   });
-  const domains = loadIngredients("./data/clean_ingredients.csv");
-  const hashes = computeNameHash(domains);
-  const merkle = computeMerkleTree(domains);
+  const ingredients = loadIngredients("./data/clean_ingredients.csv");
+  const hashes = computeNameHash(ingredients);
+  const leaves = computeKeccak(hashes);
+  sortAll(ingredients, hashes, leaves);
+  const merkle = computeMerkleTree(leaves);
+  console.log("Merkle Root: ", "0x" + merkle.root);
   for (let i = 0; i < 10; i++) {
     const mongoIngredient = new Ingredient({
-      domain: domains[i].concat(".eth"),
+      domain: ingredients[i].concat(".eth"),
       hash: hashes[i],
       path: merkle["proofs"][i],
     });
-    await mongoIngredient.save();
+    // await mongoIngredient.save();
   }
   mongoose.connection.close();
   console.log("Finished!");
