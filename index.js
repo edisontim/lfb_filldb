@@ -8,7 +8,7 @@ function loadIngredients(path) {
   const rawdata = fs.readFileSync(path).toString().split(/\r?\n/);
   rawdata.shift();
   const data = rawdata.map((x) => {
-    return x.replace(/ /g, "");
+    return x.replace(/ /g, "") + ".eth";
   });
   return data;
 }
@@ -63,13 +63,13 @@ function sortAll(ingredients, nameHashes, leaves) {
   sortAll(ingredients, hashes, leaves);
   const merkle = computeMerkleTree(leaves);
   console.log("Merkle Root: ", "0x" + merkle.root);
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < ingredients.length; i++) {
     const mongoIngredient = new Ingredient({
-      domain: ingredients[i].concat(".eth"),
+      domain: ingredients[i],
       hash: hashes[i],
       path: merkle["proofs"][i],
     });
-    // await mongoIngredient.save();
+    await mongoIngredient.save();
   }
   mongoose.connection.close();
   console.log("Finished!");
