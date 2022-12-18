@@ -51,7 +51,13 @@ function sortAll(ingredients, nameHashes, leaves) {
 
 (async () => {
   console.log("Inserting the data");
-  await mongoose.connect("mongodb://localhost:27017/lfb");
+  let MONGO_URI;
+  if (process.env.NODE_ENV === "prod") {
+    MONGO_URI = "mongodb://mongo_db:27017/lfb";
+  } else {
+    MONGO_URI = "mongodb://localhost:27017/lfb";
+  }
+  await mongoose.connect(MONGO_URI);
   const Ingredient = mongoose.model("Ingredient", {
     domain: "string",
     hash: "string",
