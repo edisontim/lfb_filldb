@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 import namehash from "@ensdomains/eth-ens-namehash";
 import * as fs from "fs";
 import MerkleTree from "merkletreejs";
@@ -57,6 +57,11 @@ function sortAll(ingredients, nameHashes, leaves) {
     hash: "string",
     path: "array",
   });
+  let dbContent = await Ingredient.find().exec();
+  if (dbContent.length > 0) {
+    console.log("db already filled ... exit");
+    process.exit();
+  }
   const ingredients = loadIngredients("./data/clean_ingredients.csv");
   const hashes = computeNameHash(ingredients);
   const leaves = computeKeccak(hashes);
