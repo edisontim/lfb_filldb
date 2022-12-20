@@ -5,12 +5,14 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "start:prod": "cross-env NODE_ENV=prod nodemon index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@ensdomains/eth-ens-namehash": "^2.0.15",
+    "cross-env": "^7.0.3",
     "keccak256": "^1.0.6",
     "merkletreejs": "^0.3.8",
     "mongodb": "^4.12.0",
